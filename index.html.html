@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>항진축산 사내판매 주문서</title>
+<script src="//t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@700;900&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap');
+
+:root{
+  --charcoal:#faf5e9;
+  --charcoal-2:#ffffff;
+  --paper:#2a241d;
+  --paper-dim:#efe6d3;
+  --brass:#b08d57;
+  --brass-light:#8a6423;
+  --stamp:#a4372a;
+  --ink:#1c1712;
+  --line:rgba(169,125,59,0.35);
+  --ticket-bg:#fffdf6;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--charcoal);
+  color:var(--paper);
+  font-family:'Noto Sans KR',sans-serif;
+  min-height:100vh;
+  padding:0 0 60px 0;
+}
+
+/* ---------- Header ---------- */
+.masthead{
+  padding:36px 20px 22px;
+  border-bottom:1px solid var(--line);
+  position:relative;
+  overflow:hidden;
+}
+.masthead::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    repeating-linear-gradient(90deg, rgba(176,141,87,0.05) 0px, rgba(176,141,87,0.05) 1px, transparent 1px, transparent 40px);
+  pointer-events:none;
+}
+.eyebrow{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  letter-spacing:0.28em;
+  color:var(--brass-light);
+  text-transform:uppercase;
+  margin:0 0 10px;
+}
+h1.brand{
+  font-family:'Noto Serif KR',serif;
+  font-weight:900;
+  font-size:clamp(28px,5vw,42px);
+  margin:0 0 6px;
+  letter-spacing:-0.01em;
+  color:var(--paper);
+}
+.brand span{color:var(--brass-light);}
+.tagline{
+  font-size:14px;
+  color:#6b5d47;
+  margin:0;
+}
+
+/* ---------- Notice box ---------- */
+.notice{
+  max-width:1100px;
+  margin:22px auto 0;
+  padding:0 20px;
+}
+details.notice-box{
+  background:var(--charcoal-2);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:16px 18px;
+}
+details.notice-box summary{
+  cursor:pointer;
+  font-weight:700;
+  font-size:14px;
+  color:var(--brass-light);
+  list-style:none;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+details.notice-box summary::-webkit-details-marker{display:none;}
+details.notice-box summary::before{
+  content:"▸";
+  transition:transform .2s;
+  font-size:12px;
+}
+details.notice-box[open] summary::before{transform:rotate(90deg);}
+.notice-body{
+  margin-top:14px;
+  font-size:13px;
+  line-height:1.9;
+  color:var(--paper);
+  font-weight:500;
+}
+.notice-body strong{color:var(--stamp);background:rgba(140,53,39,0.15);padding:0 4px;}
+.notice-body .acct{
+  font-family:'JetBrains Mono',monospace;
+  color:var(--paper);
+}
+
+/* ---------- Layout ---------- */
+.layout{
+  max-width:1100px;
+  margin:28px auto 0;
+  padding:0 20px;
+  display:grid;
+  grid-template-columns:1fr 340px;
+  gap:24px;
+  align-items:start;
+}
+@media (max-width:860px){
+  .layout{grid-template-columns:1fr;}
+}
+
+/* ---------- Category tabs ---------- */
+.view-switch{
+  max-width:1100px;
+  margin:20px auto 0;
+  padding:0 20px;
+  display:flex;
+  gap:8px;
+}
+.view-tab{
+  background:var(--charcoal-2);
+  border:1px solid var(--line);
+  color:#6b5d47;
+  font-family:'Noto Sans KR',sans-serif;
+  font-size:14px;
+  font-weight:700;
+  padding:10px 20px;
+  border-radius:20px;
+  cursor:pointer;
+}
+.view-tab.active{
+  background:var(--brass);
+  border-color:var(--brass);
+  color:#fff;
+}
+.history-order{
+  background:var(--charcoal-2);
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:16px 18px;
+  margin-bottom:12px;
+}
+.history-order-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  margin-bottom:8px;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.history-order-date{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  color:#6b5d47;
+}
+.history-order-total{
+  font-family:'JetBrains Mono',monospace;
+  font-weight:700;
+  color:var(--stamp);
+  font-size:15px;
+}
+.history-order-meta{
+  font-size:12.5px;
+  color:#6b5d47;
+  margin-bottom:8px;
+  line-height:1.7;
+}
+.history-order-items{
+  font-size:13.5px;
+  line-height:1.9;
+  border-top:1px dashed var(--line);
+  padding-top:8px;
+}
+.history-order-cancelled{
+  opacity:0.55;
+}
+.history-cancel-badge{
+  display:inline-block;
+  font-family:'Noto Sans KR',sans-serif;
+  font-size:11px;
+  font-weight:700;
+  color:#fff;
+  background:var(--stamp);
+  border-radius:3px;
+  padding:1px 7px;
+  margin-left:6px;
+  vertical-align:middle;
+}
+.btn-cancel-order{
+  background:none;
+  border:1px solid var(--stamp);
+  color:var(--stamp);
+  border-radius:4px;
+  padding:7px 14px;
+  font-size:12.5px;
+  font-weight:700;
+  cursor:pointer;
+  font-family:'Noto Sans KR',sans-serif;
+}
+.btn-cancel-order:hover{background:rgba(164,55,42,0.1);}
+.btn-cancel-order:disabled{opacity:0.5;cursor:not-allowed;}
+.history-empty{
+  text-align:center;
+  color:#6b5d47;
+  padding:30px 0;
+  font-size:13.5px;
+}
+.history-summary{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  background:var(--brass);
+  color:#fff;
+  border-radius:6px;
+  padding:12px 18px;
+  margin-bottom:14px;
+  font-size:14px;
+  font-weight:700;
+}
+.history-summary-total{
+  font-family:'JetBrains Mono',monospace;
+  font-size:17px;
+}
+
+.tabs{
+  display:flex;
+  gap:6px;
+  overflow-x:auto;
+  padding-bottom:4px;
+  margin-bottom:18px;
+  border-bottom:1px solid var(--line);
+}
+.tab{
+  flex:0 0 auto;
+  background:none;
+  border:none;
+  color:#7a6b52;
+  font-family:'Noto Sans KR',sans-serif;
+  font-size:14px;
+  font-weight:500;
+  padding:10px 14px;
+  cursor:pointer;
+  white-space:nowrap;
+  border-bottom:2px solid transparent;
+  transition:color .15s, border-color .15s;
+}
+.tab:hover{color:var(--paper);}
+.tab.active{
+  color:var(--brass-light);
+  border-bottom-color:var(--brass);
+  font-weight:700;
+}
+.tab-disabled{
+  color:#c9bfa8 !important;
+  cursor:not-allowed;
+  text-decoration:line-through;
+}
+.tab-disabled:hover{color:#c9bfa8 !important;}
+
+/* ---------- Product cards ---------- */
+.category-section{display:none;}
+.category-section.active{display:block;}
+.product-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:12px;
+}
+.card{
+  background:var(--charcoal-2);
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  transition:border-color .15s;
+}
+.card.has-qty{border-color:var(--brass);}
+.card-name{
+  font-size:15px;
+  font-weight:700;
+  color:var(--paper);
+  line-height:1.4;
+}
+.card-badge{
+  display:inline-block;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  color:var(--stamp);
+  border:1px solid var(--stamp);
+  border-radius:3px;
+  padding:1px 6px;
+  margin-bottom:2px;
+  width:fit-content;
+}
+.card-price{
+  font-family:'JetBrains Mono',monospace;
+  font-size:14px;
+  color:var(--brass-light);
+}
+.card-note{
+  font-size:11.5px;
+  color:#6b5d47;
+  line-height:1.5;
+}
+.qty-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:auto;
+  padding-top:8px;
+  border-top:1px dashed var(--line);
+}
+.stepper{
+  display:flex;
+  align-items:center;
+  gap:0;
+  border:1px solid var(--line);
+  border-radius:4px;
+  overflow:hidden;
+}
+.stepper button{
+  background:var(--charcoal);
+  color:var(--brass-light);
+  border:none;
+  width:30px;
+  height:30px;
+  font-size:16px;
+  cursor:pointer;
+  font-family:'JetBrains Mono',monospace;
+}
+.stepper button:hover{background:rgba(176,141,87,0.2);}
+.stepper input{
+  width:56px;
+  text-align:center;
+  background:var(--charcoal);
+  border:none;
+  color:var(--paper);
+  font-family:'JetBrains Mono',monospace;
+  font-size:14px;
+  padding:6px 0;
+}
+.stepper input:focus{outline:none;}
+.unit-label{
+  font-size:11px;
+  color:#6b5d47;
+  font-family:'JetBrains Mono',monospace;
+}
+.subtotal{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12.5px;
+  color:var(--brass-light);
+  min-height:14px;
+}
+
+/* ---------- Order ticket (sticky) ---------- */
+.ticket-wrap{position:sticky;top:20px;}
+.ticket{
+  background:var(--ticket-bg);
+  color:var(--ink);
+  border-radius:4px;
+  position:relative;
+  padding:22px 18px 18px;
+  box-shadow:0 8px 24px rgba(169,125,59,0.18);
+  border:1px solid var(--line);
+}
+.ticket::before{
+  content:"";
+  position:absolute;
+  top:0; left:0; right:0;
+  height:10px;
+  background:
+    radial-gradient(circle at 8px 0, transparent 6px, var(--charcoal) 6px) top left / 16px 10px repeat-x;
+}
+.ticket-title{
+  font-family:'Noto Serif KR',serif;
+  font-weight:900;
+  font-size:18px;
+  text-align:center;
+  margin:6px 0 2px;
+  letter-spacing:0.05em;
+}
+.ticket-sub{
+  text-align:center;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  color:#6b6255;
+  letter-spacing:0.15em;
+  margin-bottom:14px;
+}
+.ticket hr{
+  border:none;
+  border-top:1px dashed #b3a988;
+  margin:12px 0;
+}
+.ticket-items{
+  min-height:40px;
+  max-height:260px;
+  overflow-y:auto;
+  font-size:12.5px;
+}
+.ticket-empty{
+  text-align:center;
+  color:#8a8065;
+  font-size:12px;
+  padding:14px 0;
+}
+.ticket-line{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  padding:5px 0;
+  font-family:'JetBrains Mono',monospace;
+}
+.ticket-line .name{
+  font-family:'Noto Sans KR',sans-serif;
+  color:var(--ink);
+  flex:1;
+}
+.ticket-line .amt{white-space:nowrap;display:inline-flex;align-items:center;gap:6px;}
+.ticket-remove{
+  background:none;
+  border:none;
+  color:#7a6b52;
+  font-size:15px;
+  line-height:1;
+  cursor:pointer;
+  padding:0 2px;
+  font-family:'Noto Sans KR',sans-serif;
+}
+.ticket-remove:hover{color:var(--stamp);}
+.ticket-total{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  margin-top:10px;
+  font-family:'JetBrains Mono',monospace;
+}
+.ticket-total .label{font-size:12px;color:#6b6255;}
+.ticket-total .value{font-size:22px;font-weight:700;color:var(--stamp);}
+
+/* ---------- Order form fields ---------- */
+.buyer-form{
+  max-width:1100px;
+  margin:28px auto 0;
+  padding:24px 20px;
+}
+.buyer-panel{
+  background:var(--charcoal-2);
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:22px;
+}
+.buyer-panel h2{
+  font-family:'Noto Serif KR',serif;
+  font-size:17px;
+  margin:0 0 18px;
+  color:var(--brass-light);
+}
+.field-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+@media (max-width:600px){.field-grid{grid-template-columns:1fr;}}
+.field{display:flex;flex-direction:column;gap:6px;}
+.field.full{grid-column:1/-1;}
+.field label{font-size:12.5px;color:#6b5d47;font-weight:500;}
+.field input,.field select{
+  background:var(--charcoal);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:10px 12px;
+  color:var(--paper);
+  font-family:'Noto Sans KR',sans-serif;
+  font-size:14px;
+}
+.field input:focus,.field select:focus{outline:none;border-color:var(--brass);}
+.field input:disabled{
+  background:var(--paper-dim);
+  color:#a89a7c;
+  cursor:not-allowed;
+  border-color:var(--line);
+}
+.addr-row{display:flex;gap:8px;flex-wrap:wrap;}
+.addr-results{
+  display:none;
+  position:absolute;
+  top:calc(100% + 4px);
+  left:0;
+  right:0;
+  background:var(--charcoal-2);
+  border:1px solid var(--brass);
+  border-radius:4px;
+  max-height:240px;
+  overflow-y:auto;
+  z-index:30;
+  box-shadow:0 8px 20px rgba(0,0,0,0.12);
+}
+.addr-result-item{
+  padding:10px 12px;
+  font-size:13.5px;
+  color:var(--paper);
+  cursor:pointer;
+  border-bottom:1px solid var(--line);
+}
+.addr-result-item:last-child{border-bottom:none;}
+.addr-result-item:hover{background:rgba(176,141,87,0.15);}
+.addr-result-empty{
+  padding:12px;
+  font-size:13px;
+  color:#6b5d47;
+  text-align:center;
+}
+.addr-row input{flex:1;}
+.btn-addr{
+  background:var(--charcoal);
+  border:1px solid var(--brass);
+  color:var(--brass-light);
+  border-radius:4px;
+  padding:0 14px;
+  font-size:13px;
+  cursor:pointer;
+  white-space:nowrap;
+  font-weight:700;
+}
+.btn-addr:hover{background:rgba(176,141,87,0.15);}
+.radio-group{display:flex;gap:10px;flex-wrap:wrap;}
+.radio-pill{
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:8px 16px;
+  font-size:13px;
+  cursor:pointer;
+  color:#6b5d47;
+  user-select:none;
+}
+.radio-pill input{display:none;}
+.radio-pill.checked{
+  border-color:var(--brass);
+  background:rgba(176,141,87,0.15);
+  color:var(--brass-light);
+  font-weight:700;
+}
+
+.submit-row{
+  margin-top:22px;
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+}
+.btn-submit{
+  background:var(--stamp);
+  color:#f3ede1;
+  border:none;
+  border-radius:4px;
+  padding:13px 26px;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
+  font-family:'Noto Sans KR',sans-serif;
+}
+.btn-submit:hover{background:#a3402f;}
+
+.hint{font-size:11.5px;color:#6b5d47;margin-top:8px;}
+
+/* ---------- Confirm modal ---------- */
+.modal-backdrop{
+  display:none;
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.6);
+  z-index:50;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.modal-backdrop.open{display:flex;}
+.modal{
+  background:var(--ticket-bg);
+  color:var(--ink);
+  border-radius:6px;
+  max-width:480px;
+  width:100%;
+  max-height:80vh;
+  overflow-y:auto;
+  padding:24px;
+}
+.modal h3{
+  font-family:'Noto Serif KR',serif;
+  margin:0 0 14px;
+}
+.modal pre{
+  white-space:pre-wrap;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12.5px;
+  background:#e6ddc9;
+  padding:14px;
+  border-radius:4px;
+  line-height:1.7;
+}
+.modal-actions{
+  display:flex;
+  gap:8px;
+  margin-top:16px;
+  justify-content:flex-end;
+}
+.modal-actions button{
+  border:none;
+  border-radius:4px;
+  padding:10px 16px;
+  font-size:13px;
+  cursor:pointer;
+  font-weight:700;
+}
+.btn-copy{background:var(--stamp);color:#fff;}
+.btn-close{background:#d8cfba;color:var(--ink);}
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <p class="eyebrow">항진축산 · Since 발주전표</p>
+  <h1 class="brand">사내판매 <span>육포 주문서</span></h1>
+  <p class="tagline">프로토타입 화면입니다 — 상품/수량을 골라보시고 사용성을 확인해주세요.</p>
+</div>
+
+<div class="view-switch">
+  <button type="button" class="view-tab active" id="tabViewOrder">주문하기</button>
+  <button type="button" class="view-tab" id="tabViewHistory">주문내역 조회</button>
+</div>
+
+<div id="viewOrder">
+
+<div class="notice">
+  <details class="notice-box" open>
+    <summary>주문 전 꼭 확인해주세요 (안내사항 4건 + 자투리 안내)</summary>
+    <div class="notice-body">
+      1. 당일 출고는 <strong>오전 9시</strong> 마감입니다. 사무실 방문 요청도 마감 후에는 불가합니다.<br>
+      2. 재고 소진 시 주문서는 "유지"되며, 재입고 시 순차 출고됩니다.<br>
+      3. 결제계좌: <span class="acct">농협 301-0043-1046-61</span> (예금주: (주)항진축산제2공장)<br>
+      4. 현금/카드 결제 희망 시 사무실로 방문해주세요.<br><br>
+      <strong>자투리 육포 안내</strong> — 자투리 제품 최대 10kg당 1봉은 선호도가 낮은 소형/발색 미흡 제품(자투리B)으로 섞여 출고될 수 있습니다. 지인분들께 미리 안내 부탁드립니다.<br><br>
+      <strong>택배 분실 관련</strong> — 수령 시 수량을 먼저 확인하시고, 이상이 있으면 박스·현물 증빙사진을 촬영해두셔야 보상 청구가 가능합니다. 수량·배송지 기재 오류의 책임은 주문자 본인에게 있습니다.
+    </div>
+  </details>
+</div>
+
+<div class="layout">
+  <div class="products">
+    <div class="tabs" id="tabs"></div>
+    <div id="sections"></div>
+  </div>
+
+  <div class="ticket-wrap">
+    <div class="ticket">
+      <div class="ticket-title">주 문 전 표</div>
+      <div class="ticket-sub">HANGJIN LIVESTOCK ORDER SLIP</div>
+      <hr>
+      <div class="ticket-items" id="ticketItems">
+        <div class="ticket-empty">아직 담긴 상품이 없습니다</div>
+      </div>
+      <hr>
+      <div class="ticket-line" id="shippingLine" style="display:none;">
+        <span class="name">택배비 (<span id="shippingKgLabel"></span>)</span>
+        <span class="amt" id="shippingAmt"></span>
+      </div>
+      <div class="ticket-total">
+        <span class="label">합계 금액</span>
+        <span class="value" id="ticketTotal">0원</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="buyer-form">
+  <div class="buyer-panel">
+    <h2>주문자 정보</h2>
+    <div class="field-grid">
+      <div class="field">
+        <label>주문자 성함 *</label>
+        <input type="text" id="fName" placeholder="홍길동">
+      </div>
+
+      <div class="field full">
+        <label>배송 방법 *</label>
+        <div class="radio-group" id="deliveryGroup">
+          <label class="radio-pill checked"><input type="radio" name="delivery" value="택배" checked>택배 발송</label>
+          <label class="radio-pill"><input type="radio" name="delivery" value="픽업">사내 픽업</label>
+        </div>
+      </div>
+
+      <div class="field full" id="addrField">
+        <label>수령인 성함 *</label>
+        <input type="text" id="fRecipientName" placeholder="예: 홍길동 (주문자와 다를 경우 입력)" style="margin-bottom:10px;">
+        <label>수령인 연락처 *</label>
+        <input type="tel" id="fPhone" placeholder="010-0000-0000" style="margin-bottom:10px;">
+        <label>배송 주소 *</label>
+        <div class="addr-row">
+          <input type="text" id="fZip" placeholder="우편번호" readonly>
+          <button type="button" class="btn-addr" id="btnAddrSearch">우편번호 찾기</button>
+          <button type="button" class="btn-addr" id="btnLoadHistory">과거주문내역</button>
+        </div>
+        <input type="text" id="fAddr1" placeholder="도로명 주소 (검색 시 자동입력)" readonly style="margin-top:8px;">
+        <input type="text" id="fAddr2" placeholder="상세주소 입력 (예: 101동 202호)" style="margin-top:8px;">
+        <p class="hint" id="addrHint"></p>
+      </div>
+
+      <div class="field full" id="submitStatusField" style="display:none;">
+        <p class="hint" id="submitStatus"></p>
+      </div>
+
+      <div class="field full">
+        <label>기타 요청사항</label>
+        <input type="text" id="fMemo" placeholder="선택 입력">
+      </div>
+    </div>
+
+    <div class="submit-row">
+      <button class="btn-submit" id="btnSubmit">제출</button>
+    </div>
+    <p class="hint">※ 제출하시면 구글 시트에 자동으로 한 행씩 저장됩니다. (연결 전이라면 안내 문구가 뜹니다)</p>
+  </div>
+</div>
+
+</div><!-- /#viewOrder -->
+
+<div id="viewHistory" style="display:none;">
+  <div class="buyer-form" style="margin-top:28px;">
+    <div class="buyer-panel">
+      <h2>주문내역 조회</h2>
+      <div class="field-grid">
+        <div class="field full">
+          <label>주문자 성함 *</label>
+          <input type="text" id="hName" placeholder="주문하실 때 입력한 성함">
+        </div>
+        <div class="field">
+          <label>시작일 (선택)</label>
+          <input type="date" id="hStart">
+        </div>
+        <div class="field">
+          <label>종료일 (선택)</label>
+          <input type="date" id="hEnd">
+        </div>
+      </div>
+      <div class="submit-row">
+        <button class="btn-submit" id="btnHistorySearch">조회하기</button>
+      </div>
+      <p class="hint">※ 기간을 비워두면 전체 기간에서 검색합니다.</p>
+      <div id="historyResults" style="margin-top:20px;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <h3>주문 내용 확인</h3>
+    <pre id="modalContent"></pre>
+    <div class="modal-actions">
+      <button class="btn-close" id="btnModalClose">닫기</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="reorderModalBackdrop">
+  <div class="modal" style="max-width:480px;">
+    <h3>과거 주문 불러오기</h3>
+    <div id="reorderList"></div>
+    <div class="modal-actions">
+      <button class="btn-close" id="btnReorderClose">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CATEGORIES = [
+  {
+    id: "stickjatturi",
+    label: "스틱,자투리외",
+    items: [
+      {id:"stick1kg", name:"스틱(외국산)", price:48000, unit:"kg", step:0.5, note:"1kg 구매 시 돈육포 500g 증정"},
+      {id:"ganggangribjerky50", name:"강강 갈비맛육포 50g", price:2500, unit:"팩", step:1, weightKg:0.05},
+      {id:"premium3p", name:"원프리미엄육포 30g×3 기획팩", price:5500, unit:"팩", step:1, weightKg:0.09},
+      {id:"chaeggeutpepper", name:"채끝페퍼 160g", price:8500, unit:"팩", step:1, weightKg:0.16},
+      {id:"chaeggeutincase", name:"원채끝(인케이스) 200g", price:9900, unit:"팩", step:1, weightKg:0.2},
+      {id:"roastmini", name:"로스트 미니비프", price:38000, unit:"kg", step:0.5},
+      {id:"porkbill", name:"포크빌통통 50g", price:1700, unit:"팩", step:1, weightKg:0.05},
+      {id:"samwonmild", name:"삼원가든 순한맛 50g", price:3500, unit:"팩", step:1, weightKg:0.05, note:"2개 주문 시 1개 추가 증정"},
+      {id:"samwonhot", name:"삼원가든 매운맛 50g", price:3500, unit:"팩", step:1, weightKg:0.05, note:"2개 주문 시 1개 추가 증정"},
+      {id:"jatturi", name:"자투리 육포", price:40000, unit:"kg", step:0.5, note:"1년 이내 재판매 금지"},
+      {id:"hanwoojatturi", name:"한우자투리", price:55000, unit:"kg", step:0.5},
+      {id:"beefbarnuts", name:"한입비프바 넛츠", price:40000, unit:"kg", step:0.5},
+      {id:"beefbarcheese", name:"한입비프바 치즈", price:40000, unit:"kg", step:0.5},
+      {id:"jikhwapung", name:"직화풍", price:26000, unit:"kg", step:0.5},
+      {id:"jikhwachili", name:"직화칠리", price:26000, unit:"kg", step:0.5},
+      {id:"handonbbq", name:"한돈바베큐", price:26000, unit:"kg", step:0.5, max:4, note:"최대 4kg 주문 가능"},
+      {id:"buldak", name:"불닭", price:26000, unit:"kg", step:0.5},
+    ]
+  },
+  {
+    id: "sale",
+    label: "할인상품",
+    items: [
+      {id:"olga1kg", name:"[할인] 올가한우육포", price:48000, unit:"kg", step:0.5, max:5.5, note:"20%할인 · 최대 5.5kg"},
+      {id:"olga350", name:"[할인] 올가한우육포 350g", price:17000, unit:"개", step:1, max:1, weightKg:0.35, note:"20%할인 · 1개 한정"},
+      {id:"sillok", name:"[할인] 실록한우 자투리", price:44000, unit:"kg", step:0.5, note:"20%할인"},
+    ]
+  },
+  {
+    id: "gift",
+    label: "선물세트",
+    items: [
+      {id:"lowtemp450", name:"[선물세트] 저온숙성 450g", price:44000, unit:"개", step:1, max:3, weightKg:0.45, note:"최대 3개 주문 가능"},
+      {id:"original420", name:"[선물세트] 원 오리지날 420g", price:35000, unit:"개", step:1, weightKg:0.42},
+      {id:"chaeggeut525", name:"[선물세트] 원채끝 525g", price:44000, unit:"개", step:1, weightKg:0.525},
+      {id:"sampyo490", name:"[선물세트] 샘표 490g", price:38500, unit:"개", step:1, max:3, weightKg:0.49, note:"최대 3개 주문 가능"},
+      {id:"okpremium490", name:"[선물세트] 오케이프리미엄 490g", price:38500, unit:"개", step:1, max:9, weightKg:0.49, note:"최대 9개 주문 가능"},
+      {id:"myungin300", name:"[선물세트] 명인정통2호 300g", price:33000, unit:"개", step:1, weightKg:0.3, note:"크리스탈보자기"},
+    ]
+  }
+];
+
+const PRICE_LOOKUP = {};
+CATEGORIES.forEach(cat=>{
+  cat.items.forEach(item=>{
+    // 시트에는 [선물세트] 표시는 유지, [할인]만 제거된 이름으로 저장되므로 동일 규칙으로 매핑
+    const sheetName = item.name.replace('[할인] ','');
+    PRICE_LOOKUP[sheetName] = item;
+  });
+});
+
+// 시트에 저장된 "상품명 48,000원 [비고]" 형식에서 가격/비고 표시를 떼고 원래 상품명만 돌려줌 (조회/재주문 매칭용)
+function stripPriceSuffix(fullName){
+  let s = String(fullName || '').trim();
+  s = s.replace(/\s\[[^\]]*\]$/, ''); // 끝의 " [비고]" 제거
+  s = s.replace(/\s[\d,]+원$/, '');   // 끝의 " 12,345원" 제거
+  return s.trim();
+}
+
+const state = {}; // id -> qty
+
+function fmtWon(n){ return n.toLocaleString('ko-KR') + '원'; }
+
+function findItem(id){
+  for(const cat of CATEGORIES){
+    const it = cat.items.find(i=>i.id===id);
+    if(it) return it;
+  }
+}
+
+const DISABLED_CATEGORY_IDS = ["gift"]; // 비활성화된 카테고리(탭만 막고 데이터는 유지)
+
+function buildTabs(){
+  const tabsEl = document.getElementById('tabs');
+  const sectionsEl = document.getElementById('sections');
+  CATEGORIES.forEach((cat, idx)=>{
+    const isDisabled = DISABLED_CATEGORY_IDS.includes(cat.id);
+    const tab = document.createElement('button');
+    tab.className = 'tab' + (idx===0 && !isDisabled ? ' active' : '') + (isDisabled ? ' tab-disabled' : '');
+    tab.textContent = cat.label + (isDisabled ? ' (품절)' : '');
+    if(isDisabled){
+      tab.disabled = true;
+    } else {
+      tab.onclick = ()=>{
+        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+        tab.classList.add('active');
+        document.querySelectorAll('.category-section').forEach(s=>s.classList.remove('active'));
+        document.getElementById('section-'+cat.id).classList.add('active');
+      };
+    }
+    tabsEl.appendChild(tab);
+
+    const section = document.createElement('div');
+    section.className = 'category-section' + (idx===0 && !isDisabled ? ' active' : '');
+    section.id = 'section-'+cat.id;
+
+    const grid = document.createElement('div');
+    grid.className = 'product-grid';
+
+    cat.items.forEach(item=>{
+      grid.appendChild(buildCard(item));
+    });
+
+    section.appendChild(grid);
+    sectionsEl.appendChild(section);
+  });
+}
+
+function buildCard(item){
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.id = 'card-'+item.id;
+
+  let badge = '';
+  if(item.name.startsWith('[할인]')) badge = '<div class="card-badge">SALE</div>';
+  else if(item.name.startsWith('[선물세트]')) badge = '<div class="card-badge" style="color:#b08d57;border-color:#b08d57;">GIFT</div>';
+
+  const cleanName = item.name.replace('[할인] ','').replace('[선물세트] ','');
+
+  card.innerHTML = `
+    ${badge}
+    <div class="card-name">${cleanName}</div>
+    <div class="card-price">${fmtWon(item.price)} / ${item.unit}</div>
+    ${item.note ? `<div class="card-note">${item.note}</div>` : ''}
+    <div class="qty-row">
+      <div class="stepper">
+        <button type="button" data-action="dec">−</button>
+        <input type="text" inputmode="decimal" value="0" id="qty-${item.id}">
+        <button type="button" data-action="inc">+</button>
+      </div>
+      <div>
+        <div class="unit-label">${item.unit} 단위</div>
+        <div class="subtotal" id="subtotal-${item.id}"></div>
+      </div>
+    </div>
+  `;
+
+  card.querySelector('[data-action="inc"]').onclick = ()=>changeQty(item, item.step);
+  card.querySelector('[data-action="dec"]').onclick = ()=>changeQty(item, -item.step);
+  card.querySelector('#qty-'+CSS.escape(item.id)).addEventListener('change', (e)=>setQty(item, e.target.value));
+  card.querySelector('#qty-'+CSS.escape(item.id)).addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){ e.target.blur(); }
+  });
+
+  return card;
+}
+
+function setQty(item, rawValue){
+  let next = parseFloat(String(rawValue).replace(',', '.'));
+  if(isNaN(next) || next < 0) next = 0;
+  if(item.max && next > item.max) next = item.max;
+  next = Math.round(next * 100) / 100;
+
+  state[item.id] = next;
+  if(next === 0) delete state[item.id];
+
+  document.getElementById('qty-'+item.id).value = next;
+  document.getElementById('card-'+item.id).classList.toggle('has-qty', next > 0);
+  document.getElementById('subtotal-'+item.id).textContent = next > 0 ? fmtWon(next * item.price) : '';
+
+  renderTicket();
+}
+
+function changeQty(item, delta){
+  const cur = state[item.id] || 0;
+  setQty(item, cur + delta);
+}
+
+function calcTotalKg(){
+  let kg = 0;
+  Object.keys(state).forEach(id=>{
+    const item = findItem(id);
+    const qty = state[id];
+    if(item.unit === 'kg'){
+      kg += qty;
+    } else if(item.weightKg){
+      kg += qty * item.weightKg;
+    }
+  });
+  return Math.round(kg * 100) / 100;
+}
+
+function calcShipping(totalKg){
+  const deliveryEl = document.querySelector('input[name="delivery"]:checked');
+  const delivery = deliveryEl ? deliveryEl.value : '택배';
+  if(delivery !== '택배') return 0;
+  if(Object.keys(state).length === 0) return 0;
+  if(totalKg <= 0) return 0;
+  return Math.ceil(totalKg / 10) * 5000;
+}
+
+function removeItem(id){
+  const item = findItem(id);
+  if(!item) return;
+  delete state[id];
+
+  const qtyInput = document.getElementById('qty-'+id);
+  if(qtyInput) qtyInput.value = 0;
+  const card = document.getElementById('card-'+id);
+  if(card) card.classList.remove('has-qty');
+  const subtotalEl = document.getElementById('subtotal-'+id);
+  if(subtotalEl) subtotalEl.textContent = '';
+
+  renderTicket();
+}
+
+function renderTicket(){
+  const itemsEl = document.getElementById('ticketItems');
+  const ids = Object.keys(state);
+  const shippingLine = document.getElementById('shippingLine');
+
+  if(ids.length === 0){
+    itemsEl.innerHTML = '<div class="ticket-empty">아직 담긴 상품이 없습니다</div>';
+    document.getElementById('ticketTotal').textContent = '0원';
+    shippingLine.style.display = 'none';
+    return;
+  }
+  let total = 0;
+  itemsEl.innerHTML = ids.map(id=>{
+    const item = findItem(id);
+    const qty = state[id];
+    const amt = qty * item.price;
+    total += amt;
+    const cleanName = item.name.replace('[할인] ','').replace('[선물세트] ','');
+    return `<div class="ticket-line"><span class="name">${cleanName} ×${qty}</span><span class="amt">${fmtWon(amt)}<button type="button" class="ticket-remove" onclick="removeItem('${id}')" title="삭제" aria-label="삭제">×</button></span></div>`;
+  }).join('');
+
+  const totalKg = calcTotalKg();
+  const shipping = calcShipping(totalKg);
+
+  if(shipping > 0){
+    shippingLine.style.display = 'flex';
+    document.getElementById('shippingKgLabel').textContent = `${totalKg}kg (${Math.ceil(totalKg/10)}구간)`;
+    document.getElementById('shippingAmt').textContent = fmtWon(shipping);
+  } else {
+    shippingLine.style.display = 'none';
+  }
+
+  document.getElementById('ticketTotal').textContent = fmtWon(total + shipping);
+}
+
+/* ---------- delivery / payment pill toggling ---------- */
+function setupPillGroup(groupId){
+  const group = document.getElementById(groupId);
+  group.querySelectorAll('.radio-pill').forEach(pill=>{
+    pill.addEventListener('click', ()=>{
+      group.querySelectorAll('.radio-pill').forEach(p=>p.classList.remove('checked'));
+      pill.classList.add('checked');
+      pill.querySelector('input').checked = true;
+      if(groupId === 'deliveryGroup'){
+        toggleAddressField();
+        renderTicket();
+      }
+    });
+  });
+}
+
+/* ---------- 주소 검색 (카카오 우편번호 서비스 - 팝업 방식) ---------- */
+function execAddressSearch(){
+  new kakao.Postcode({
+    oncomplete: function(data){
+      var addr = '';
+      var extraAddr = '';
+
+      if(data.userSelectedType === 'R'){
+        addr = data.roadAddress;
+      } else {
+        addr = data.jibunAddress;
+      }
+
+      if(data.userSelectedType === 'R'){
+        if(data.bname !== '' && /[동로가]$/.test(data.bname)){
+          extraAddr += data.bname;
+        }
+        if(data.buildingName !== '' && data.apartment === 'Y'){
+          extraAddr += (extraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
+        }
+        if(extraAddr !== ''){
+          extraAddr = ' (' + extraAddr + ')';
+        }
+      }
+
+      document.getElementById('fZip').value = data.zonecode;
+      document.getElementById('fAddr1').value = addr + extraAddr;
+      document.getElementById('fAddr2').focus();
+    }
+  }).open();
+}
+
+document.getElementById('btnAddrSearch').addEventListener('click', execAddressSearch);
+
+/* ---------- 과거 주문내역 불러와서 재주문 ---------- */
+function groupSheetRows(rows){
+  const grouped = {};
+  rows.forEach(r=>{
+    const key = r.timestamp;
+    if(!grouped[key]){
+      grouped[key] = {
+        timestamp: r.timestamp,
+        delivery: r.delivery,
+        recipientName: r.recipientName,
+        recipientPhone: r.recipientPhone,
+        address: r.address,
+        memo: r.memo,
+        items: []
+      };
+    }
+    grouped[key].items.push({ name: r.item, qty: r.qty });
+  });
+  return Object.values(grouped).sort((a,b)=> new Date(b.timestamp) - new Date(a.timestamp));
+}
+
+document.getElementById('btnLoadHistory').addEventListener('click', async ()=>{
+  const name = document.getElementById('fName').value.trim();
+  const listBox = document.getElementById('reorderList');
+
+  if(!name){
+    alert('주문자 성함을 먼저 입력해주세요.');
+    return;
+  }
+  if(!SHEET_WEBHOOK_URL){
+    alert('아직 구글시트 연동이 설정되지 않아 과거 주문을 조회할 수 없습니다.');
+    return;
+  }
+
+  listBox.innerHTML = '<div class="history-empty">조회 중...</div>';
+  document.getElementById('reorderModalBackdrop').classList.add('open');
+
+  try{
+    const params = new URLSearchParams({ name });
+    const res = await fetch(`${SHEET_WEBHOOK_URL}?${params.toString()}`);
+    if(!res.ok) throw new Error('조회 실패');
+    const data = await res.json();
+    renderReorderList(data.orders || []);
+  }catch(err){
+    listBox.innerHTML = '<div class="history-empty">⚠ 조회에 실패했습니다. 잠시 후 다시 시도해주세요.</div>';
+  }
+});
+
+function renderReorderList(rows){
+  const listBox = document.getElementById('reorderList');
+  const orders = groupSheetRows(rows);
+
+  if(orders.length === 0){
+    listBox.innerHTML = '<div class="history-empty">조회된 과거 주문이 없습니다.</div>';
+    return;
+  }
+
+  listBox.innerHTML = orders.map((o, i)=>{
+    const d = new Date(o.timestamp);
+    const dateLabel = isNaN(d.getTime()) ? o.timestamp : d.toLocaleString('ko-KR');
+    const itemsText = o.items.map(it=>`${it.name} ×${it.qty}`).join(', ');
+    const deliveryLabel = o.delivery === '예' ? '택배' : '픽업';
+    const addrText = (o.delivery === '예' && o.address) ? o.address : '';
+    return `
+      <div class="history-order">
+        <div class="history-order-head"><span class="history-order-date">${dateLabel}</span></div>
+        <div class="history-order-meta">배송방법: ${deliveryLabel}${addrText ? '<br>배송지: '+addrText : ''}</div>
+        <div class="history-order-items">${itemsText}</div>
+        <div class="submit-row" style="margin-top:10px;">
+          <button type="button" class="btn-addr" data-reorder-idx="${i}">이 주문 불러오기</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  listBox.querySelectorAll('[data-reorder-idx]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      applyReorder(orders[parseInt(btn.dataset.reorderIdx)]);
+    });
+  });
+}
+
+function applyReorder(order){
+  // 현재 담긴 상품 비우기
+  Object.keys(state).forEach(id=> removeItem(id));
+
+  const notFound = [];
+  order.items.forEach(it=>{
+    const ref = PRICE_LOOKUP[stripPriceSuffix(it.name)];
+    if(ref){
+      setQty(ref, parseFloat(it.qty) || 0);
+    } else {
+      notFound.push(it.name);
+    }
+  });
+
+  if(order.recipientName) document.getElementById('fRecipientName').value = order.recipientName;
+  if(order.recipientPhone) document.getElementById('fPhone').value = order.recipientPhone;
+  if(order.memo) document.getElementById('fMemo').value = order.memo;
+
+  const isCourier = order.delivery === '예';
+  const targetValue = isCourier ? '택배' : '픽업';
+  document.querySelectorAll('#deliveryGroup .radio-pill').forEach(pill=>{
+    const input = pill.querySelector('input');
+    const match = input.value === targetValue;
+    pill.classList.toggle('checked', match);
+    input.checked = match;
+  });
+  toggleAddressField();
+
+  if(isCourier && order.address){
+    let addressStr = String(order.address).trim();
+    let zip = '';
+    // 앞쪽에 붙은 "(우편번호)" 또는 빈 "()" 묶음을 순서대로 제거하면서 우편번호만 추출
+    let m;
+    while((m = addressStr.match(/^\(([^)]*)\)\s*/))){
+      const inner = m[1].trim();
+      if(!zip && /^\d{5}$/.test(inner)) zip = inner;
+      addressStr = addressStr.slice(m[0].length);
+    }
+    if(zip) document.getElementById('fZip').value = zip;
+    if(addressStr) document.getElementById('fAddr1').value = addressStr.trim();
+  }
+
+  document.getElementById('reorderModalBackdrop').classList.remove('open');
+
+  let msg = '과거 주문을 불러왔습니다. 수량과 배송 정보를 다시 한 번 확인해주세요.';
+  if(notFound.length > 0){
+    msg += `\n(현재 판매하지 않는 상품은 제외되었습니다: ${notFound.join(', ')})`;
+  }
+  alert(msg);
+}
+
+document.getElementById('btnReorderClose').addEventListener('click', ()=>{
+  document.getElementById('reorderModalBackdrop').classList.remove('open');
+});
+
+
+/* ---------- 전화번호 자동 하이픈 ---------- */
+document.getElementById('fPhone').addEventListener('input', (e)=>{
+  let digits = e.target.value.replace(/\D/g, '').slice(0, 11);
+  let formatted = digits;
+  if(digits.length > 3 && digits.length <= 7){
+    formatted = digits.slice(0,3) + '-' + digits.slice(3);
+  } else if(digits.length > 7){
+    formatted = digits.slice(0,3) + '-' + digits.slice(3,7) + '-' + digits.slice(7);
+  }
+  e.target.value = formatted;
+});
+
+function toggleAddressField(){
+  const val = document.querySelector('input[name="delivery"]:checked').value;
+  const isCourier = (val === '택배');
+  const addrField = document.getElementById('addrField');
+  addrField.style.display = isCourier ? 'flex' : 'none';
+
+  const phoneInput = document.getElementById('fPhone');
+  phoneInput.disabled = !isCourier;
+  if(!isCourier) phoneInput.value = '';
+}
+
+
+/* ---------- Google Sheets webhook ----------
+   1) 구글시트에서 확장프로그램 > Apps Script 를 열고 아래 안내 코드를 붙여넣은 뒤
+      "배포 > 새 배포 > 웹 앱"으로 배포합니다. (액세스 권한: 전체 허용)
+   2) 발급된 웹 앱 URL을 아래 SHEET_WEBHOOK_URL 에 붙여넣으면 자동 저장이 켜집니다.
+   3) 비워두면(빈 문자열) 기존처럼 화면에 요약만 보여주고 저장은 하지 않습니다.
+------------------------------------------------ */
+const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbx0WIe2d6vMsJ2z6aJlrFy5n-Ibgd5hqqGV1JgoD-TDDpur-LvGkqTMIh_3sMz2v7YdeA/exec";
+
+/* ---------- Submit / confirm modal ---------- */
+function resetOrderForm(){
+  // 장바구니 비우기
+  Object.keys(state).forEach(id=> removeItem(id));
+
+  // 입력값 초기화
+  document.getElementById('fName').value = '';
+  document.getElementById('fRecipientName').value = '';
+  document.getElementById('fPhone').value = '';
+  document.getElementById('fZip').value = '';
+  document.getElementById('fAddr1').value = '';
+  document.getElementById('fAddr2').value = '';
+  document.getElementById('fMemo').value = '';
+
+  // 배송방법 기본값(택배)으로 되돌리기
+  document.querySelectorAll('#deliveryGroup .radio-pill').forEach(pill=>{
+    const input = pill.querySelector('input');
+    const isDefault = input.value === '택배';
+    pill.classList.toggle('checked', isDefault);
+    input.checked = isDefault;
+  });
+  toggleAddressField();
+}
+
+document.getElementById('btnSubmit').addEventListener('click', async ()=>{
+  const name = document.getElementById('fName').value.trim();
+  const delivery = document.querySelector('input[name="delivery"]:checked').value;
+  const memo = document.getElementById('fMemo').value.trim();
+  const ids = Object.keys(state);
+
+  if(!name){
+    alert('주문자 성함을 입력해주세요.');
+    return;
+  }
+  if(ids.length === 0){
+    alert('주문할 상품을 1개 이상 선택해주세요.');
+    return;
+  }
+  let addrLine = '';
+  let addrLineNoZip = '';
+  let recipientName = '';
+  let recipientPhone = '';
+  if(delivery === '택배'){
+    recipientName = document.getElementById('fRecipientName').value.trim();
+    recipientPhone = document.getElementById('fPhone').value.trim();
+    const zip = document.getElementById('fZip').value.trim();
+    const addr1 = document.getElementById('fAddr1').value.trim();
+    const addr2 = document.getElementById('fAddr2').value.trim();
+    if(!recipientPhone){
+      alert('수령인 연락처를 입력해주세요.');
+      return;
+    }
+    if(!recipientName){
+      alert('수령인 성함을 입력해주세요.');
+      return;
+    }
+    if(!addr1){
+      alert('배송 주소를 입력해주세요.');
+      return;
+    }
+    addrLine = `(${zip}) ${addr1} ${addr2}`;
+    addrLineNoZip = `${addr1} ${addr2}`.trim();
+  }
+
+  let total = 0;
+  const itemLines = ids.map(id=>{
+    const item = findItem(id);
+    const qty = state[id];
+    const amt = qty * item.price;
+    total += amt;
+    const cleanName = item.name.replace('[할인] ','').replace('[선물세트] ','');
+    return `${cleanName} ×${qty} (${fmtWon(amt)})`;
+  });
+  const linesText = itemLines.map(l=>'- '+l).join('\n');
+
+  const totalKg = calcTotalKg();
+  const shipping = calcShipping(totalKg);
+  const grandTotal = total + shipping;
+
+  const summary =
+`[항진축산 사내판매 주문]
+주문자: ${name}
+배송방법: ${delivery}${delivery==='택배' ? '\n수령인: '+recipientName+' ('+recipientPhone+')\n배송지: '+addrLine : ''}
+${memo ? '요청사항: '+memo+'\n' : ''}
+--- 주문 품목 ---
+${linesText}
+${shipping > 0 ? '\n택배비: '+fmtWon(shipping) : ''}
+
+합계: ${fmtWon(grandTotal)}`;
+
+  const payload = {
+    timestamp: new Date().toISOString(),
+    name,
+    delivery: delivery==='택배' ? '예' : '아니오',
+    recipientName,
+    recipientPhone,
+    address: delivery==='택배' ? addrLineNoZip : '',
+    memo,
+    items: ids.map(id=>{
+      const item = findItem(id);
+      const qty = state[id];
+      const sheetName = item.name.replace('[할인] ',''); // [선물세트] 표시는 유지, [할인]만 제거
+      const nameWithPrice = `${sheetName} ${item.price.toLocaleString('ko-KR')}원${item.note ? ' ['+item.note+']' : ''}`;
+      return { name: nameWithPrice, qtyLabel: `${qty}` };
+    })
+  };
+
+  const modalTitle = document.querySelector('#modalBackdrop h3');
+  const statusField = document.getElementById('submitStatusField');
+  const statusText = document.getElementById('submitStatus');
+  const submitBtn = document.getElementById('btnSubmit');
+
+  if(!SHEET_WEBHOOK_URL){
+    statusField.style.display = 'block';
+    statusText.textContent = '⚠ 아직 구글시트 연동 주소가 설정되지 않아, 저장 없이 요약만 표시됩니다.';
+    modalTitle.textContent = '주문 내용 확인 (저장 안 됨)';
+    document.getElementById('modalContent').textContent = summary;
+    document.getElementById('modalBackdrop').classList.add('open');
+    resetOrderForm();
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = '전송 중...';
+
+  try{
+    // Apps Script 웹앱은 응답에 CORS 헤더를 주지 않아 브라우저가 결과를 읽지 못합니다.
+    // no-cors로 전송하고, 네트워크 요청 자체가 실패하지 않으면 성공으로 간주합니다.
+    await fetch(SHEET_WEBHOOK_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify(payload)
+    });
+    modalTitle.textContent = '✔ 주문이 전송되었습니다';
+    statusField.style.display = 'block';
+    statusText.textContent = '구글 시트로 저장 요청을 보냈습니다. (잠시 후 시트에서 확인해보세요)';
+    resetOrderForm();
+  }catch(err){
+    modalTitle.textContent = '주문 내용 확인 (저장 실패)';
+    statusField.style.display = 'block';
+    statusText.textContent = '⚠ 자동 저장에 실패했습니다. 아래 내용을 복사해서 담당자에게 전달해주세요.';
+  }finally{
+    submitBtn.disabled = false;
+    submitBtn.textContent = '제출';
+  }
+
+  document.getElementById('modalContent').textContent = summary;
+  document.getElementById('modalBackdrop').classList.add('open');
+});
+
+document.getElementById('btnModalClose').addEventListener('click', ()=>{
+  document.getElementById('modalBackdrop').classList.remove('open');
+});
+
+buildTabs();
+setupPillGroup('deliveryGroup');
+
+/* ---------- 화면 전환 (주문하기 / 주문내역 조회) ---------- */
+document.getElementById('tabViewOrder').addEventListener('click', ()=>{
+  document.getElementById('tabViewOrder').classList.add('active');
+  document.getElementById('tabViewHistory').classList.remove('active');
+  document.getElementById('viewOrder').style.display = 'block';
+  document.getElementById('viewHistory').style.display = 'none';
+});
+document.getElementById('tabViewHistory').addEventListener('click', ()=>{
+  document.getElementById('tabViewHistory').classList.add('active');
+  document.getElementById('tabViewOrder').classList.remove('active');
+  document.getElementById('viewHistory').style.display = 'block';
+  document.getElementById('viewOrder').style.display = 'none';
+});
+
+/* ---------- 주문내역 조회 ---------- */
+document.getElementById('btnHistorySearch').addEventListener('click', async ()=>{
+  const name = document.getElementById('hName').value.trim();
+  const start = document.getElementById('hStart').value;
+  const end = document.getElementById('hEnd').value;
+  const resultsBox = document.getElementById('historyResults');
+
+  if(!name){
+    alert('주문자 성함을 입력해주세요.');
+    return;
+  }
+  if(!SHEET_WEBHOOK_URL){
+    resultsBox.innerHTML = '<div class="history-empty">⚠ 아직 구글시트 연동 주소가 설정되지 않아 조회할 수 없습니다.</div>';
+    return;
+  }
+
+  resultsBox.innerHTML = '<div class="history-empty">조회 중...</div>';
+
+  try{
+    const params = new URLSearchParams({ name });
+    if(start) params.set('start', start);
+    if(end) params.set('end', end);
+
+    const res = await fetch(`${SHEET_WEBHOOK_URL}?${params.toString()}`);
+    if(!res.ok) throw new Error('조회 실패');
+    const data = await res.json();
+    renderHistory(data.orders || []);
+  }catch(err){
+    resultsBox.innerHTML = '<div class="history-empty">⚠ 조회에 실패했습니다. 잠시 후 다시 시도해주세요.</div>';
+  }
+});
+
+function calcOrderTotal(order){
+  let itemsSubtotal = 0;
+  let totalKg = 0;
+
+  order.items.forEach(it=>{
+    const ref = PRICE_LOOKUP[stripPriceSuffix(it.name)];
+    const qtyNum = parseFloat(it.qty) || 0;
+    if(ref){
+      itemsSubtotal += qtyNum * ref.price;
+      if(ref.unit === 'kg') totalKg += qtyNum;
+      else if(ref.weightKg) totalKg += qtyNum * ref.weightKg;
+    }
+  });
+
+  let shipping = 0;
+  if(order.delivery === '예' && totalKg > 0){
+    shipping = Math.ceil(totalKg / 10) * 5000;
+  }
+
+  return itemsSubtotal + shipping;
+}
+
+function renderHistory(rows){
+  const resultsBox = document.getElementById('historyResults');
+  if(rows.length === 0){
+    resultsBox.innerHTML = '<div class="history-empty">조회된 주문 내역이 없습니다.</div>';
+    return;
+  }
+
+  // 같은 타임스탬프(같은 주문)끼리 묶기
+  const grouped = {};
+  rows.forEach(r=>{
+    const key = r.timestamp;
+    if(!grouped[key]){
+      grouped[key] = {
+        timestamp: r.timestamp,
+        name: r.name,
+        delivery: r.delivery,
+        recipientName: r.recipientName,
+        recipientPhone: r.recipientPhone,
+        address: r.address,
+        memo: r.memo,
+        status: r.status || '',
+        items: []
+      };
+    }
+    grouped[key].items.push({ name: r.item, qty: r.qty });
+  });
+
+  const orders = Object.values(grouped).sort((a,b)=> new Date(b.timestamp) - new Date(a.timestamp));
+  const activeOrders = orders.filter(o=> o.status !== '취소됨');
+  const grandTotal = activeOrders.reduce((sum, o)=> sum + calcOrderTotal(o), 0);
+
+  const summaryHtml = `
+    <div class="history-summary">
+      <span>총 ${activeOrders.length}건${orders.length > activeOrders.length ? ' (취소 '+(orders.length-activeOrders.length)+'건 제외)' : ''}</span>
+      <span class="history-summary-total">합계 ${fmtWon(grandTotal)}</span>
+    </div>
+  `;
+
+  const ordersHtml = orders.map((o, idx)=>{
+    const d = new Date(o.timestamp);
+    const dateLabel = isNaN(d.getTime()) ? o.timestamp : d.toLocaleString('ko-KR');
+    const itemsHtml = o.items.map(it=>`${it.name} ×${it.qty}`).join('<br>');
+    const orderTotal = calcOrderTotal(o);
+    const isCancelled = o.status === '취소됨';
+    return `
+      <div class="history-order${isCancelled ? ' history-order-cancelled' : ''}">
+        <div class="history-order-head">
+          <span class="history-order-date">${dateLabel}${isCancelled ? ' <span class="history-cancel-badge">취소됨</span>' : ''}</span>
+          <span class="history-order-total">${fmtWon(orderTotal)}</span>
+        </div>
+        <div class="history-order-meta">
+          배송방법: ${o.delivery === '예' ? '택배' : '픽업'}${o.delivery==='예' ? ' · 수령인: '+(o.recipientName||'-')+' ('+(o.recipientPhone||'-')+')<br>배송지: '+(o.address||'-') : ''}${o.memo ? '<br>요청사항: '+o.memo : ''}
+        </div>
+        <div class="history-order-items">${itemsHtml}</div>
+        ${isCancelled ? '' : `<div class="submit-row" style="margin-top:10px;"><button type="button" class="btn-cancel-order" data-cancel-idx="${idx}">주문 취소</button></div>`}
+      </div>
+    `;
+  }).join('');
+
+  resultsBox.innerHTML = summaryHtml + ordersHtml;
+
+  resultsBox.querySelectorAll('[data-cancel-idx]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      cancelOrder(orders[parseInt(btn.dataset.cancelIdx)], btn);
+    });
+  });
+}
+
+async function cancelOrder(order, btnEl){
+  const d = new Date(order.timestamp);
+  const dateLabel = isNaN(d.getTime()) ? order.timestamp : d.toLocaleString('ko-KR');
+  if(!confirm(`${dateLabel} 주문을 취소하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)){
+    return;
+  }
+
+  btnEl.disabled = true;
+  btnEl.textContent = '취소 처리 중...';
+
+  try{
+    const params = new URLSearchParams({
+      action: 'cancel',
+      name: order.name,
+      timestamp: order.timestamp
+    });
+    const res = await fetch(`${SHEET_WEBHOOK_URL}?${params.toString()}`);
+    if(!res.ok) throw new Error('취소 실패');
+    const data = await res.json();
+    if(data.result === 'success' && data.updated > 0){
+      document.getElementById('btnHistorySearch').click();
+    } else {
+      alert('취소 처리에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      btnEl.disabled = false;
+      btnEl.textContent = '주문 취소';
+    }
+  }catch(err){
+    alert('취소 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    btnEl.disabled = false;
+    btnEl.textContent = '주문 취소';
+  }
+}
+</script>
+
+</body>
+</html>
