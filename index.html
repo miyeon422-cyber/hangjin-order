@@ -292,6 +292,9 @@ details.notice-box[open] summary::before{transform:rotate(90deg);}
   transition:border-color .15s;
 }
 .card.has-qty{border-color:var(--brass);}
+.card.card-soldout{opacity:0.5;}
+.card.card-soldout .stepper button,
+.card.card-soldout .stepper input{cursor:not-allowed;}
 .card-name{
   font-size:15px;
   font-weight:700;
@@ -825,12 +828,12 @@ const CATEGORIES = [
     id: "gift",
     label: "선물세트",
     items: [
-      {id:"lowtemp450", name:"[선물세트] 저온숙성 450g", price:44000, unit:"개", step:1, max:3, weightKg:0.45, note:"최대 3개 주문 가능"},
-      {id:"original420", name:"[선물세트] 원 오리지날 420g", price:35000, unit:"개", step:1, weightKg:0.42},
-      {id:"chaeggeut525", name:"[선물세트] 원채끝 525g", price:44000, unit:"개", step:1, weightKg:0.525},
-      {id:"sampyo490", name:"[선물세트] 샘표 490g", price:38500, unit:"개", step:1, max:3, weightKg:0.49, note:"최대 3개 주문 가능"},
-      {id:"okpremium490", name:"[선물세트] 오케이프리미엄 490g", price:38500, unit:"개", step:1, max:9, weightKg:0.49, note:"최대 9개 주문 가능"},
-      {id:"myungin300", name:"[선물세트] 명인정통2호 300g", price:33000, unit:"개", step:1, weightKg:0.3, note:"크리스탈보자기"},
+      {id:"lowtemp450", name:"[선물세트] 저온숙성 450g", price:44000, unit:"개", step:1, max:3, weightKg:0.45, note:"최대 3개 주문 가능", soldOut:true},
+      {id:"original420", name:"[선물세트] 원 오리지날 350g", price:35000, unit:"개", step:1, max:93, weightKg:0.35, note:"쇼핑백 소진시 보자기 지급"},
+      {id:"chaeggeut525", name:"[선물세트] 원채끝 525g", price:44000, unit:"개", step:1, weightKg:0.525, soldOut:true},
+      {id:"sampyo490", name:"[선물세트] 샘표 490g", price:38500, unit:"개", step:1, max:3, weightKg:0.49, note:"최대 3개 주문 가능", soldOut:true},
+      {id:"okpremium490", name:"[선물세트] 오케이프리미엄 490g", price:38500, unit:"개", step:1, max:9, weightKg:0.49, note:"최대 9개 주문 가능", soldOut:true},
+      {id:"myungin300", name:"[선물세트] 명인정통2호 300g", price:33000, unit:"개", step:1, max:78, weightKg:0.3, note:"크리스탈보자기"},
     ]
   }
 ];
@@ -863,7 +866,7 @@ function findItem(id){
   }
 }
 
-const DISABLED_CATEGORY_IDS = ["gift"]; // 비활성화된 카테고리(탭만 막고 데이터는 유지)
+const DISABLED_CATEGORY_IDS = []; // 비활성화된 카테고리(탭만 막고 데이터는 유지)
 
 function buildTabs(){
   const tabsEl = document.getElementById('tabs');
@@ -903,11 +906,12 @@ function buildTabs(){
 
 function buildCard(item){
   const card = document.createElement('div');
-  card.className = 'card';
+  card.className = 'card' + (item.soldOut ? ' card-soldout' : '');
   card.id = 'card-'+item.id;
 
   let badge = '';
-  if(item.name.startsWith('[할인]')) badge = '<div class="card-badge">SALE</div>';
+  if(item.soldOut) badge = '<div class="card-badge" style="color:#a89a7c;border-color:#a89a7c;">품절</div>';
+  else if(item.name.startsWith('[할인]')) badge = '<div class="card-badge">SALE</div>';
   else if(item.name.startsWith('[선물세트]')) badge = '<div class="card-badge" style="color:#b08d57;border-color:#b08d57;">GIFT</div>';
 
   const cleanName = item.name.replace('[할인] ','').replace('[선물세트] ','');
@@ -919,9 +923,9 @@ function buildCard(item){
     ${item.note ? `<div class="card-note">${item.note}</div>` : ''}
     <div class="qty-row">
       <div class="stepper">
-        <button type="button" data-action="dec">−</button>
-        <input type="text" inputmode="decimal" value="0" id="qty-${item.id}">
-        <button type="button" data-action="inc">+</button>
+        <button type="button" data-action="dec" ${item.soldOut ? 'disabled' : ''}>−</button>
+        <input type="text" inputmode="decimal" value="0" id="qty-${item.id}" ${item.soldOut ? 'disabled' : ''}>
+        <button type="button" data-action="inc" ${item.soldOut ? 'disabled' : ''}>+</button>
       </div>
       <div>
         <div class="unit-label">${item.unit} 단위</div>
@@ -929,6 +933,10 @@ function buildCard(item){
       </div>
     </div>
   `;
+
+  if(item.soldOut){
+    return card;
+  }
 
   card.querySelector('[data-action="inc"]').onclick = ()=>changeQty(item, item.step);
   card.querySelector('[data-action="dec"]').onclick = ()=>changeQty(item, -item.step);
