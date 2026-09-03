@@ -322,6 +322,12 @@ details.notice-box[open] summary::before{transform:rotate(90deg);}
   color:#6b5d47;
   line-height:1.5;
 }
+.card-stock{
+  font-size:11.5px;
+  font-weight:700;
+  color:var(--brass-light);
+}
+.card-stock.stock-out{color:var(--stamp);}
 .qty-row{
   display:flex;
   align-items:center;
@@ -798,7 +804,7 @@ const CATEGORIES = [
     items: [
       {id:"stick1kg", name:"스틱(외국산)", price:48000, unit:"kg", step:0.5, note:"1kg 구매 시 돈육포 500g 증정"},
       {id:"ganggangribjerky50", name:"강강 갈비맛육포 50g", price:2500, unit:"팩", step:1, weightKg:0.05},
-      {id:"itswelljerky45", name:"이츠웰쫄깃한육포 45g", price:2500, unit:"팩", step:1, max:31, weightKg:0.045, note:"최대 31개 주문 가능"},
+      {id:"itswelljerky45", name:"이츠웰쫄깃한육포 45g", price:2500, unit:"팩", step:1, max:31, weightKg:0.045},
       {id:"premium3p", name:"원프리미엄육포 30g×3 기획팩", price:5500, unit:"팩", step:1, weightKg:0.09},
       {id:"chaeggeutpepper", name:"채끝페퍼 160g", price:8500, unit:"팩", step:1, weightKg:0.16},
       {id:"chaeggeutincase", name:"원채끝(인케이스) 200g", price:9900, unit:"팩", step:1, weightKg:0.2},
@@ -812,7 +818,7 @@ const CATEGORIES = [
       {id:"beefbarcheese", name:"한입비프바 치즈", price:40000, unit:"kg", step:0.5},
       {id:"jikhwapung", name:"직화풍", price:26000, unit:"kg", step:0.5},
       {id:"jikhwachili", name:"직화칠리", price:26000, unit:"kg", step:0.5},
-      {id:"handonbbq", name:"한돈바베큐", price:26000, unit:"kg", step:0.5, max:4, note:"최대 4kg 주문 가능"},
+      {id:"handonbbq", name:"한돈바베큐", price:26000, unit:"kg", step:0.5, max:4},
       {id:"buldak", name:"불닭", price:26000, unit:"kg", step:0.5},
     ]
   },
@@ -820,21 +826,21 @@ const CATEGORIES = [
     id: "sale",
     label: "할인상품",
     items: [
-      {id:"olga1kg", name:"[할인] 올가한우육포", price:48000, unit:"kg", step:0.5, max:5.5, note:"20%할인 · 최대 5.5kg"},
-      {id:"olga350", name:"[할인] 올가한우육포 350g", price:17000, unit:"개", step:1, max:1, weightKg:0.35, note:"20%할인 · 1개 한정"},
-      {id:"sillok", name:"[할인] 실록한우 자투리", price:44000, unit:"kg", step:0.5, note:"20%할인"},
+      {id:"olga1kg", name:"[할인] 올가한우육포", price:48000, unit:"kg", step:0.5, max:5.5, note:"20%할인"},
+      {id:"olga350", name:"[할인] 올가한우육포 350g", price:17000, unit:"개", step:1, max:1, weightKg:0.35, note:"20%할인"},
+      {id:"sillok", name:"[할인] 실록한우 자투리", price:44000, unit:"kg", step:0.5, max:14, note:"20%할인"},
     ]
   },
   {
     id: "gift",
     label: "선물세트",
     items: [
-      {id:"lowtemp450", name:"[선물세트] 저온숙성 450g", price:44000, unit:"개", step:1, max:3, weightKg:0.45, note:"최대 3개 주문 가능", soldOut:true},
-      {id:"original420", name:"[선물세트] 원 오리지날 350g", price:35000, unit:"개", step:1, max:93, weightKg:0.35, note:"최대 93개 주문 가능 · 쇼핑백 소진시 보자기 지급"},
+      {id:"lowtemp450", name:"[선물세트] 저온숙성 450g", price:44000, unit:"개", step:1, max:3, weightKg:0.45, soldOut:true},
+      {id:"original420", name:"[선물세트] 원 오리지날 350g", price:35000, unit:"개", step:1, max:92, weightKg:0.35, note:"쇼핑백 소진시 보자기 지급"},
       {id:"chaeggeut525", name:"[선물세트] 원채끝 525g", price:44000, unit:"개", step:1, weightKg:0.525, soldOut:true},
-      {id:"sampyo490", name:"[선물세트] 샘표 490g", price:38500, unit:"개", step:1, max:3, weightKg:0.49, note:"최대 3개 주문 가능", soldOut:true},
-      {id:"okpremium490", name:"[선물세트] 오케이프리미엄 490g", price:38500, unit:"개", step:1, max:9, weightKg:0.49, note:"최대 9개 주문 가능", soldOut:true},
-      {id:"myungin300", name:"[선물세트] 명인정통2호 300g", price:33000, unit:"개", step:1, max:78, weightKg:0.3, note:"최대 78개 주문 가능 · 크리스탈보자기"},
+      {id:"sampyo490", name:"[선물세트] 샘표 490g", price:38500, unit:"개", step:1, max:3, weightKg:0.49, soldOut:true},
+      {id:"okpremium490", name:"[선물세트] 오케이프리미엄 490g", price:38500, unit:"개", step:1, max:9, weightKg:0.49, soldOut:true},
+      {id:"myungin300", name:"[선물세트] 명인정통2호 300g", price:33000, unit:"개", step:1, max:78, weightKg:0.3, note:"크리스탈보자기"},
     ]
   }
 ];
@@ -857,6 +863,7 @@ function stripPriceSuffix(fullName){
 }
 
 const state = {}; // id -> qty
+const REMAINING_STOCK = {}; // item.id -> 구글시트 실주문량을 반영한 실시간 잔여 주문가능 수량
 
 function fmtWon(n){ return n.toLocaleString('ko-KR') + '원'; }
 
@@ -922,6 +929,7 @@ function buildCard(item){
     <div class="card-name">${cleanName}</div>
     <div class="card-price">${fmtWon(item.price)} / ${item.unit}</div>
     ${item.note ? `<div class="card-note">${item.note}</div>` : ''}
+    ${item.max !== undefined ? `<div class="card-stock" id="stock-${item.id}"></div>` : ''}
     <div class="qty-row">
       <div class="stepper">
         <button type="button" data-action="dec" ${item.soldOut ? 'disabled' : ''}>−</button>
@@ -952,7 +960,8 @@ function buildCard(item){
 function setQty(item, rawValue){
   let next = parseFloat(String(rawValue).replace(',', '.'));
   if(isNaN(next) || next < 0) next = 0;
-  if(item.max && next > item.max) next = item.max;
+  const effectiveMax = (REMAINING_STOCK[item.id] !== undefined) ? REMAINING_STOCK[item.id] : item.max;
+  if(effectiveMax !== undefined && next > effectiveMax) next = effectiveMax;
   next = Math.round(next * 100) / 100;
 
   state[item.id] = next;
@@ -1400,6 +1409,7 @@ ${shipping > 0 ? '\n택배비: '+fmtWon(shipping) : ''}
     statusField.style.display = 'block';
     statusText.textContent = '구글 시트로 저장 요청을 보냈습니다. (잠시 후 시트에서 확인해보세요)';
     resetOrderForm();
+    setTimeout(refreshStockLimits, 1500); // 시트 반영 시간을 감안해 약간의 지연 후 재고 재조회
   }catch(err){
     modalTitle.textContent = '주문 내용 확인 (저장 실패)';
     statusField.style.display = 'block';
@@ -1419,6 +1429,60 @@ document.getElementById('btnModalClose').addEventListener('click', ()=>{
 
 buildTabs();
 setupPillGroup('deliveryGroup');
+
+/* ---------- 실시간 재고(잔여 주문가능 수량) 반영 ----------
+   item.max 가 설정된 상품에 한해, 구글시트에 실제로 쌓인 주문 수량(취소 제외)을
+   빼서 잔여 수량을 계산하고, 카드에 표시 + 수량 제한에 반영합니다. */
+async function refreshStockLimits(){
+  if(!SHEET_WEBHOOK_URL) return;
+
+  try{
+    const res = await fetch(`${SHEET_WEBHOOK_URL}?action=stock`);
+    if(!res.ok) return;
+    const data = await res.json();
+    const ordered = data.ordered || {};
+
+    CATEGORIES.forEach(cat=>{
+      cat.items.forEach(item=>{
+        if(item.max === undefined) return; // 재고 관리 대상 상품이 아님
+
+        const key = item.name.replace('[할인] ',''); // 시트 저장 이름과 동일한 규칙
+        const orderedQty = ordered[key] || 0;
+        let remaining = Math.round((item.max - orderedQty) * 100) / 100;
+        if(remaining < 0) remaining = 0;
+        REMAINING_STOCK[item.id] = remaining;
+
+        const stockEl = document.getElementById('stock-'+item.id);
+        if(stockEl){
+          const soldOutNow = remaining <= 0;
+          stockEl.textContent = soldOutNow ? '품절' : `잔여 주문가능: ${remaining}${item.unit}`;
+          stockEl.classList.toggle('stock-out', soldOutNow);
+        }
+
+        const card = document.getElementById('card-'+item.id);
+        if(card && !item.soldOut){ // 수동 품절 상품은 그대로 품절 유지
+          const soldOutNow = remaining <= 0;
+          card.classList.toggle('card-soldout', soldOutNow);
+          const decBtn = card.querySelector('[data-action="dec"]');
+          const incBtn = card.querySelector('[data-action="inc"]');
+          const qtyInput = card.querySelector('#qty-'+CSS.escape(item.id));
+          if(decBtn) decBtn.disabled = soldOutNow;
+          if(incBtn) incBtn.disabled = soldOutNow;
+          if(qtyInput) qtyInput.disabled = soldOutNow;
+        }
+
+        // 이미 장바구니에 담아둔 수량이 새로 계산된 잔여치보다 많으면 자동으로 줄임
+        if(state[item.id] && state[item.id] > remaining){
+          setQty(item, remaining);
+        }
+      });
+    });
+  }catch(err){
+    // 조회 실패 시 조용히 무시 — 카탈로그에 적힌 기존 max 값으로 계속 동작
+  }
+}
+
+refreshStockLimits();
 
 /* ---------- 화면 전환 (주문하기 / 주문내역 조회) ---------- */
 document.getElementById('tabViewOrder').addEventListener('click', ()=>{
