@@ -935,7 +935,7 @@ function buildCard(item){
     <div class="card-name">${cleanName}</div>
     <div class="card-price">${fmtWon(item.price)} / ${item.unit}</div>
     ${item.note ? `<div class="card-note">${item.note}</div>` : ''}
-    ${item.max !== undefined ? `<div class="card-stock" id="stock-${item.id}"></div>` : ''}
+    ${item.max !== undefined ? `<div class="card-stock" id="stock-${item.id}">재고 확인 중…</div>` : ''}
     <div class="qty-row">
       <div class="stepper">
         <button type="button" data-action="dec" ${item.soldOut ? 'disabled' : ''}>−</button>
@@ -1438,57 +1438,111 @@ setupPillGroup('deliveryGroup');
 
 /* ---------- 실시간 재고(잔여 주문가능 수량) 반영 ----------
    item.max 가 설정된 상품에 한해, 구글시트에 실제로 쌓인 주문 수량(취소 제외)을
-   빼서 잔여 수량을 계산하고, 카드에 표시 + 수량 제한에 반영합니다. */
+   빼서 잔여 수량을 계산하고, 카드에 표시 + 수량 제한에 반영합니다.
+   네트워크 지연/일시 오류에 대비해 재시도 + 캐시(직전 성공값) + 주기적 재조회를 둡니다. */
+const STOCK_CACHE_KEY = 'hangjin_stock_cache_v1';
+
+async function fetchStockWithRetry(retries = 3, baseDelay = 800){
+  for(let attempt = 0; attempt < retries; attempt++){
+    const controller = new AbortController();
+    const timeoutId = setTimeout(()=> controller.abort(), 8000);
+    try{
+      const res = await fetch(`${SHEET_WEBHOOK_URL}?action=stock`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if(!res.ok) throw new Error('bad status: '+res.status);
+      const data = await res.json();
+      return data.ordered || {};
+    }catch(err){
+      clearTimeout(timeoutId);
+      if(attempt < retries - 1){
+        await new Promise(r => setTimeout(r, baseDelay * (attempt + 1)));
+      }
+    }
+  }
+  return null; // 모든 시도 실패
+}
+
+function applyStockData(ordered, isStale){
+  CATEGORIES.forEach(cat=>{
+    cat.items.forEach(item=>{
+      if(item.max === undefined) return; // 재고 관리 대상 상품이 아님
+
+      const key = item.name.replace('[할인] ',''); // 시트 저장 이름과 동일한 규칙
+      const orderedQty = ordered[key] || 0;
+      let remaining = Math.round((item.max - orderedQty) * 100) / 100;
+      if(remaining < 0) remaining = 0;
+      REMAINING_STOCK[item.id] = remaining;
+
+      const stockEl = document.getElementById('stock-'+item.id);
+      if(stockEl){
+        const soldOutNow = remaining <= 0;
+        const label = soldOutNow ? '품절' : `잔여 주문가능: ${remaining}${item.unit}`;
+        stockEl.textContent = isStale ? label + ' (확인중…)' : label;
+        stockEl.classList.toggle('stock-out', soldOutNow);
+      }
+
+      const card = document.getElementById('card-'+item.id);
+      if(card && !item.soldOut){ // 수동 품절 상품은 그대로 품절 유지
+        const soldOutNow = remaining <= 0;
+        card.classList.toggle('card-soldout', soldOutNow);
+        const decBtn = card.querySelector('[data-action="dec"]');
+        const incBtn = card.querySelector('[data-action="inc"]');
+        const qtyInput = card.querySelector('#qty-'+CSS.escape(item.id));
+        if(decBtn) decBtn.disabled = soldOutNow;
+        if(incBtn) incBtn.disabled = soldOutNow;
+        if(qtyInput) qtyInput.disabled = soldOutNow;
+      }
+
+      // 이미 장바구니에 담아둔 수량이 새로 계산된 잔여치보다 많으면 자동으로 줄임
+      if(state[item.id] && state[item.id] > remaining){
+        setQty(item, remaining);
+      }
+    });
+  });
+}
+
+function showStockCheckFailed(){
+  CATEGORIES.forEach(cat=>{
+    cat.items.forEach(item=>{
+      if(item.max === undefined) return;
+      const stockEl = document.getElementById('stock-'+item.id);
+      if(stockEl){
+        stockEl.textContent = '재고 확인 지연 중… 잠시 후 자동 재시도';
+      }
+    });
+  });
+}
+
 async function refreshStockLimits(){
   if(!SHEET_WEBHOOK_URL) return;
 
+  // 1) 캐시된 직전 값이 있으면 즉시 반영해서 빈 화면으로 보이지 않게 함
+  let hasCache = false;
   try{
-    const res = await fetch(`${SHEET_WEBHOOK_URL}?action=stock`);
-    if(!res.ok) return;
-    const data = await res.json();
-    const ordered = data.ordered || {};
+    const cached = localStorage.getItem(STOCK_CACHE_KEY);
+    if(cached){
+      const parsed = JSON.parse(cached);
+      if(parsed && parsed.ordered){
+        applyStockData(parsed.ordered, true);
+        hasCache = true;
+      }
+    }
+  }catch(err){ /* localStorage 사용 불가 환경이면 조용히 무시 */ }
 
-    CATEGORIES.forEach(cat=>{
-      cat.items.forEach(item=>{
-        if(item.max === undefined) return; // 재고 관리 대상 상품이 아님
-
-        const key = item.name.replace('[할인] ',''); // 시트 저장 이름과 동일한 규칙
-        const orderedQty = ordered[key] || 0;
-        let remaining = Math.round((item.max - orderedQty) * 100) / 100;
-        if(remaining < 0) remaining = 0;
-        REMAINING_STOCK[item.id] = remaining;
-
-        const stockEl = document.getElementById('stock-'+item.id);
-        if(stockEl){
-          const soldOutNow = remaining <= 0;
-          stockEl.textContent = soldOutNow ? '품절' : `잔여 주문가능: ${remaining}${item.unit}`;
-          stockEl.classList.toggle('stock-out', soldOutNow);
-        }
-
-        const card = document.getElementById('card-'+item.id);
-        if(card && !item.soldOut){ // 수동 품절 상품은 그대로 품절 유지
-          const soldOutNow = remaining <= 0;
-          card.classList.toggle('card-soldout', soldOutNow);
-          const decBtn = card.querySelector('[data-action="dec"]');
-          const incBtn = card.querySelector('[data-action="inc"]');
-          const qtyInput = card.querySelector('#qty-'+CSS.escape(item.id));
-          if(decBtn) decBtn.disabled = soldOutNow;
-          if(incBtn) incBtn.disabled = soldOutNow;
-          if(qtyInput) qtyInput.disabled = soldOutNow;
-        }
-
-        // 이미 장바구니에 담아둔 수량이 새로 계산된 잔여치보다 많으면 자동으로 줄임
-        if(state[item.id] && state[item.id] > remaining){
-          setQty(item, remaining);
-        }
-      });
-    });
-  }catch(err){
-    // 조회 실패 시 조용히 무시 — 카탈로그에 적힌 기존 max 값으로 계속 동작
+  // 2) 실제 최신 값 조회 (최대 3회 재시도)
+  const fresh = await fetchStockWithRetry();
+  if(fresh){
+    applyStockData(fresh, false);
+    try{
+      localStorage.setItem(STOCK_CACHE_KEY, JSON.stringify({ ordered: fresh, ts: Date.now() }));
+    }catch(err){ /* 조용히 무시 */ }
+  } else if(!hasCache){
+    showStockCheckFailed();
   }
 }
 
 refreshStockLimits();
+setInterval(refreshStockLimits, 10000); // 10초마다 자동 재조회 — 처음 실패해도 이후 자동 복구
 
 /* ---------- 화면 전환 (주문하기 / 주문내역 조회) ---------- */
 document.getElementById('tabViewOrder').addEventListener('click', ()=>{
