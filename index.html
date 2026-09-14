@@ -1764,7 +1764,7 @@ async function cancelOrder(order, btnEl){
 function startCorrection(order){
   const d = new Date(order.timestamp);
   const dateLabel = isNaN(d.getTime()) ? order.timestamp : d.toLocaleString('ko-KR');
-  if(!confirm(`${dateLabel} 주문을 정정하시겠습니까?\n주문서에 해당 내용이 불러와지며, 수정 후 제출하면 원래 주문은 "취소됨"으로 표시됩니다.`)){
+  if(!confirm(`${dateLabel} 주문을 정정하시겠습니까?`)){
     return;
   }
 
