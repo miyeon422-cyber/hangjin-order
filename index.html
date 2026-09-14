@@ -1541,6 +1541,7 @@ function renderHistory(rows){
         address: r.address,
         memo: r.memo,
         status: r.status || '',
+        shipped: r.shipped || '',
         items: []
       };
     }
@@ -1564,10 +1565,11 @@ function renderHistory(rows){
     const itemsHtml = o.items.map(it=>`${it.name} ×${it.qty}`).join('<br>');
     const orderTotal = calcOrderTotal(o);
     const isCancelled = o.status === '취소됨';
+    const isShipped = !isCancelled && String(o.shipped).trim() !== '';
     return `
       <div class="history-order${isCancelled ? ' history-order-cancelled' : ''}">
         <div class="history-order-head">
-          <span class="history-order-date">${dateLabel}${isCancelled ? ' <span class="history-cancel-badge">취소됨</span>' : ''}</span>
+          <span class="history-order-date">${dateLabel}${isCancelled ? ' <span class="history-cancel-badge">취소됨</span>' : ''}${isShipped ? ' <span class="history-cancel-badge" style="background:var(--brass);">출고완료</span>' : ''}</span>
           <span class="history-order-total">${fmtWon(orderTotal)}</span>
         </div>
         <div class="history-order-meta">
@@ -1575,7 +1577,7 @@ function renderHistory(rows){
         </div>
         <div class="history-order-items">${itemsHtml}</div>
         ${isCancelled ? '' : `<div class="submit-row" style="margin-top:10px;gap:8px;">
-          <button type="button" class="btn-cancel-order" data-cancel-idx="${idx}">주문 취소</button>
+          ${isShipped ? '' : `<button type="button" class="btn-cancel-order" data-cancel-idx="${idx}">주문 취소</button>`}
           <button type="button" class="btn-cancel-order" data-load-idx="${idx}" style="border-color:var(--brass);color:var(--brass-light);">불러오기</button>
         </div>`}
       </div>
@@ -1618,6 +1620,9 @@ async function cancelOrder(order, btnEl){
     const data = await res.json();
     if(data.result === 'success' && data.updated > 0){
       document.getElementById('btnHistorySearch').click();
+    } else if(data.result === 'error'){
+      alert(data.message || '취소할 수 없는 주문입니다.');
+      document.getElementById('btnHistorySearch').click(); // 출고완료 배지 등 최신 상태로 다시 표시
     } else {
       alert('취소 처리에 실패했습니다. 잠시 후 다시 시도해주세요.');
       btnEl.disabled = false;
