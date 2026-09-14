@@ -1113,6 +1113,7 @@ function applyReorder(order){
     }
   });
 
+  if(order.name) document.getElementById('fName').value = order.name;
   if(order.recipientName) document.getElementById('fRecipientName').value = order.recipientName;
   if(order.recipientPhone) document.getElementById('fPhone').value = order.recipientPhone;
   if(order.memo) document.getElementById('fMemo').value = order.memo;
