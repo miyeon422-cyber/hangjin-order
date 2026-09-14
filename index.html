@@ -665,7 +665,7 @@ details.notice-box[open] summary::before{transform:rotate(90deg);}
 
 <div id="correctionBanner" style="display:none;max-width:1100px;margin:16px auto 0;padding:0 20px;">
   <div style="background:var(--stamp);color:#fff;border-radius:6px;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-    <span style="font-size:13.5px;font-weight:700;">✎ 정정 모드 — 아래 내용을 수정한 뒤 제출하면 원래 주문은 "정정"으로 표시되고 이 내용이 새로 저장됩니다.</span>
+    <span style="font-size:13.5px;font-weight:700;">✎ 정정 모드 — 아래 내용을 수정한 뒤 제출하면 원래 주문은 "취소됨"으로 표시되고 이 내용이 [정정] 표시와 함께 새로 저장됩니다.</span>
     <button type="button" id="btnCancelCorrection" style="background:none;border:1px solid #fff;color:#fff;border-radius:4px;padding:5px 12px;font-size:12.5px;cursor:pointer;">정정 취소</button>
   </div>
 </div>
@@ -867,9 +867,11 @@ CATEGORIES.forEach(cat=>{
   });
 });
 
-// 시트에 저장된 "상품명 48,000원 [비고]" 형식에서 가격/비고 표시를 떼고 원래 상품명만 돌려줌 (조회/재주문 매칭용)
+// 시트에 저장된 "[정정] 상품명 48,000원 [비고]" 형식에서 정정 표시/가격/비고 표시를 떼고
+// 원래 상품명만 돌려줌 (조회/재주문 매칭용)
 function stripPriceSuffix(fullName){
   let s = String(fullName || '').trim();
+  s = s.replace(/^\[정정\]\s*/, '');  // 앞의 "[정정] " 제거
   s = s.replace(/\s\[[^\]]*\]$/, ''); // 끝의 " [비고]" 제거
   s = s.replace(/\s[\d,]+원$/, '');   // 끝의 " 12,345원" 제거
   return s.trim();
@@ -1199,7 +1201,7 @@ function renderReorderList(rows){
   });
 }
 
-function applyReorder(order){
+function applyReorder(order, options={}){
   // 현재 담긴 상품 비우기
   Object.keys(state).forEach(id=> removeItem(id));
 
@@ -1213,6 +1215,7 @@ function applyReorder(order){
     }
   });
 
+  if(order.name) document.getElementById('fName').value = order.name;
   if(order.recipientName) document.getElementById('fRecipientName').value = order.recipientName;
   if(order.recipientPhone) document.getElementById('fPhone').value = order.recipientPhone;
   if(order.memo) document.getElementById('fMemo').value = order.memo;
@@ -1243,11 +1246,15 @@ function applyReorder(order){
 
   document.getElementById('reorderModalBackdrop').classList.remove('open');
 
-  let msg = '과거 주문을 불러왔습니다. 수량과 배송 정보를 다시 한 번 확인해주세요.';
-  if(notFound.length > 0){
-    msg += `\n(현재 판매하지 않는 상품은 제외되었습니다: ${notFound.join(', ')})`;
+  if(!options.silent){
+    let msg = '과거 주문을 불러왔습니다. 수량과 배송 정보를 다시 한 번 확인해주세요.';
+    if(notFound.length > 0){
+      msg += `\n(현재 판매하지 않는 상품은 제외되었습니다: ${notFound.join(', ')})`;
+    }
+    alert(msg);
+  } else if(notFound.length > 0){
+    alert(`현재 판매하지 않는 상품은 제외되었습니다: ${notFound.join(', ')}`);
   }
-  alert(msg);
 }
 
 document.getElementById('btnReorderClose').addEventListener('click', ()=>{
@@ -1389,7 +1396,8 @@ ${shipping > 0 ? '\n택배비: '+fmtWon(shipping) : ''}
       const item = findItem(id);
       const qty = state[id];
       const sheetName = item.name.replace('[할인] ',''); // [선물세트] 표시는 유지, [할인]만 제거
-      const nameWithPrice = `${sheetName} ${item.price.toLocaleString('ko-KR')}원${item.note ? ' ['+item.note+']' : ''}`;
+      const correctionTag = pendingCorrection ? '[정정] ' : '';
+      const nameWithPrice = `${correctionTag}${sheetName} ${item.price.toLocaleString('ko-KR')}원${item.note ? ' ['+item.note+']' : ''}`;
       return { name: nameWithPrice, qtyLabel: `${qty}` };
     })
   };
@@ -1427,12 +1435,12 @@ ${shipping > 0 ? '\n택배비: '+fmtWon(shipping) : ''}
     if(pendingCorrection){
       try{
         const cParams = new URLSearchParams({
-          action: 'correct',
+          action: 'cancel',
           name: pendingCorrection.name,
           timestamp: pendingCorrection.timestamp
         });
         await fetch(`${SHEET_WEBHOOK_URL}?${cParams.toString()}`);
-        statusText.textContent += ' 원래 주문은 "정정"으로 표시했습니다.';
+        statusText.textContent += ' 원래 주문은 "취소됨"으로 표시했습니다.';
       }catch(err){ /* 원본 표시 실패해도 새 주문 저장 자체는 유효하므로 조용히 무시 */ }
       pendingCorrection = null;
       document.getElementById('correctionBanner').style.display = 'none';
@@ -1756,11 +1764,11 @@ async function cancelOrder(order, btnEl){
 function startCorrection(order){
   const d = new Date(order.timestamp);
   const dateLabel = isNaN(d.getTime()) ? order.timestamp : d.toLocaleString('ko-KR');
-  if(!confirm(`${dateLabel} 주문을 정정하시겠습니까?\n주문서에 해당 내용이 불러와지며, 수정 후 제출하면 원래 주문은 "정정"으로 표시됩니다.`)){
+  if(!confirm(`${dateLabel} 주문을 정정하시겠습니까?\n주문서에 해당 내용이 불러와지며, 수정 후 제출하면 원래 주문은 "취소됨"으로 표시됩니다.`)){
     return;
   }
 
-  applyReorder(order); // 기존 재주문 로직 재사용 — 상품/수령인 정보를 장바구니에 불러옴
+  applyReorder(order, { silent: true }); // 기존 재주문 로직 재사용 — 상품/주문자/수령인 정보를 장바구니에 불러옴
   pendingCorrection = { timestamp: order.timestamp, name: order.name };
 
   document.getElementById('correctionBanner').style.display = 'block';
