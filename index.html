@@ -663,6 +663,13 @@ details.notice-box[open] summary::before{transform:rotate(90deg);}
 
 <div id="viewOrder">
 
+<div id="correctionBanner" style="display:none;max-width:1100px;margin:16px auto 0;padding:0 20px;">
+  <div style="background:var(--stamp);color:#fff;border-radius:6px;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+    <span style="font-size:13.5px;font-weight:700;">✎ 정정 모드 — 아래 내용을 수정한 뒤 제출하면 원래 주문은 "정정"으로 표시되고 이 내용이 새로 저장됩니다.</span>
+    <button type="button" id="btnCancelCorrection" style="background:none;border:1px solid #fff;color:#fff;border-radius:4px;padding:5px 12px;font-size:12.5px;cursor:pointer;">정정 취소</button>
+  </div>
+</div>
+
 <div class="notice">
   <details class="notice-box" open>
     <summary>주문 전 꼭 확인해주세요 (안내사항 4건 + 자투리 안내)</summary>
@@ -869,6 +876,7 @@ function stripPriceSuffix(fullName){
 }
 
 const state = {}; // id -> qty
+let pendingCorrection = null; // { timestamp, name } — 정정 대상 원 주문 정보
 const REMAINING_STOCK = {}; // item.id -> 구글시트 실주문량을 반영한 실시간 잔여 주문가능 수량
 
 function fmtWon(n){ return n.toLocaleString('ko-KR') + '원'; }
@@ -1415,6 +1423,21 @@ ${shipping > 0 ? '\n택배비: '+fmtWon(shipping) : ''}
     modalTitle.textContent = '✔ 주문이 전송되었습니다';
     statusField.style.display = 'block';
     statusText.textContent = '구글 시트로 저장 요청을 보냈습니다. (잠시 후 시트에서 확인해보세요)';
+
+    if(pendingCorrection){
+      try{
+        const cParams = new URLSearchParams({
+          action: 'correct',
+          name: pendingCorrection.name,
+          timestamp: pendingCorrection.timestamp
+        });
+        await fetch(`${SHEET_WEBHOOK_URL}?${cParams.toString()}`);
+        statusText.textContent += ' 원래 주문은 "정정"으로 표시했습니다.';
+      }catch(err){ /* 원본 표시 실패해도 새 주문 저장 자체는 유효하므로 조용히 무시 */ }
+      pendingCorrection = null;
+      document.getElementById('correctionBanner').style.display = 'none';
+    }
+
     resetOrderForm();
     setTimeout(refreshStockLimits, 1500); // 시트 반영 시간을 감안해 약간의 지연 후 재고 재조회
   }catch(err){
@@ -1641,12 +1664,13 @@ function renderHistory(rows){
   });
 
   const orders = Object.values(grouped).sort((a,b)=> new Date(b.timestamp) - new Date(a.timestamp));
-  const activeOrders = orders.filter(o=> o.status !== '취소됨');
+  const activeOrders = orders.filter(o=> o.status !== '취소됨' && o.status !== '정정');
+  const excludedCount = orders.length - activeOrders.length;
   const grandTotal = activeOrders.reduce((sum, o)=> sum + calcOrderTotal(o), 0);
 
   const summaryHtml = `
     <div class="history-summary">
-      <span>총 ${activeOrders.length}건${orders.length > activeOrders.length ? ' (취소 '+(orders.length-activeOrders.length)+'건 제외)' : ''}</span>
+      <span>총 ${activeOrders.length}건${excludedCount > 0 ? ' (취소·정정 '+excludedCount+'건 제외)' : ''}</span>
       <span class="history-summary-total">합계 ${fmtWon(grandTotal)}</span>
     </div>
   `;
@@ -1657,22 +1681,36 @@ function renderHistory(rows){
     const itemsHtml = o.items.map(it=>`${it.name} ×${it.qty}`).join('<br>');
     const orderTotal = calcOrderTotal(o);
     const isCancelled = o.status === '취소됨';
+    const isCorrected = o.status === '정정';
+    const isClosed = isCancelled || isCorrected;
+    const badge = isCancelled ? '<span class="history-cancel-badge">취소됨</span>'
+                : isCorrected ? '<span class="history-cancel-badge" style="background:var(--brass);">정정됨</span>'
+                : '';
     return `
-      <div class="history-order${isCancelled ? ' history-order-cancelled' : ''}">
+      <div class="history-order${isClosed ? ' history-order-cancelled' : ''}">
         <div class="history-order-head">
-          <span class="history-order-date">${dateLabel}${isCancelled ? ' <span class="history-cancel-badge">취소됨</span>' : ''}</span>
+          <span class="history-order-date">${dateLabel} ${badge}</span>
           <span class="history-order-total">${fmtWon(orderTotal)}</span>
         </div>
         <div class="history-order-meta">
           배송방법: ${o.delivery === '예' ? '택배' : '픽업'}${o.delivery==='예' ? ' · 수령인: '+(o.recipientName||'-')+' ('+(o.recipientPhone||'-')+')<br>배송지: '+(o.address||'-') : ''}${o.memo ? '<br>요청사항: '+o.memo : ''}
         </div>
         <div class="history-order-items">${itemsHtml}</div>
-        ${isCancelled ? '' : `<div class="submit-row" style="margin-top:10px;"><button type="button" class="btn-cancel-order" data-cancel-idx="${idx}">주문 취소</button></div>`}
+        ${isClosed ? '' : `<div class="submit-row" style="margin-top:10px;gap:8px;">
+          <button type="button" class="btn-cancel-order" data-cancel-idx="${idx}">주문 취소</button>
+          <button type="button" class="btn-cancel-order" data-correct-idx="${idx}" style="border-color:var(--brass);color:var(--brass-light);">주문 정정</button>
+        </div>`}
       </div>
     `;
   }).join('');
 
   resultsBox.innerHTML = summaryHtml + ordersHtml;
+
+  resultsBox.querySelectorAll('[data-correct-idx]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      startCorrection(orders[parseInt(btn.dataset.correctIdx)]);
+    });
+  });
 
   resultsBox.querySelectorAll('[data-cancel-idx]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -1713,6 +1751,27 @@ async function cancelOrder(order, btnEl){
     btnEl.textContent = '주문 취소';
   }
 }
+
+/* ---------- 주문 정정 ---------- */
+function startCorrection(order){
+  const d = new Date(order.timestamp);
+  const dateLabel = isNaN(d.getTime()) ? order.timestamp : d.toLocaleString('ko-KR');
+  if(!confirm(`${dateLabel} 주문을 정정하시겠습니까?\n주문서에 해당 내용이 불러와지며, 수정 후 제출하면 원래 주문은 "정정"으로 표시됩니다.`)){
+    return;
+  }
+
+  applyReorder(order); // 기존 재주문 로직 재사용 — 상품/수령인 정보를 장바구니에 불러옴
+  pendingCorrection = { timestamp: order.timestamp, name: order.name };
+
+  document.getElementById('correctionBanner').style.display = 'block';
+  document.getElementById('tabViewOrder').click();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.getElementById('btnCancelCorrection').addEventListener('click', ()=>{
+  pendingCorrection = null;
+  document.getElementById('correctionBanner').style.display = 'none';
+});
 </script>
 
 </body>
