@@ -835,7 +835,8 @@ const CATEGORIES = [
     id: "sale",
     label: "할인상품",
     items: [
-      {id:"gangsoegogi", name:"[할인] 강강 갈비맛쇠고기육포 50g", price:1000, unit:"봉", step:1, max:6355, weightKg:0.05},
+      {id:"gangsoegogi", name:"[할인] 강강 갈비맛쇠고기육포 50g", price:1000, unit:"봉", step:1, max:6355, hideStock:true, weightKg:0.05},
+      {id:"handonbbq100", name:"[할인] 한돈바베큐 100g", price:3000, unit:"팩", step:1, max:960, hideStock:true, weightKg:0.1},
     ]
   },
   {
@@ -944,7 +945,7 @@ function buildCard(item){
     <div class="card-name">${cleanName}</div>
     <div class="card-price">${fmtWon(item.price)} / ${item.unit}</div>
     ${item.note ? `<div class="card-note">${item.note}</div>` : ''}
-    ${item.max !== undefined ? `<div class="card-stock" id="stock-${item.id}">재고 확인 중…</div>` : ''}
+    ${item.max !== undefined ? `<div class="card-stock" id="stock-${item.id}" ${item.hideStock ? 'style="display:none"' : ''}>${item.hideStock ? '' : '재고 확인 중…'}</div>` : ''}
     <div class="qty-row">
       <div class="stepper">
         <button type="button" data-action="dec" ${item.soldOut ? 'disabled' : ''}>−</button>
@@ -1430,8 +1431,13 @@ function applyStockData(ordered, isStale){
       const stockEl = document.getElementById('stock-'+item.id);
       if(stockEl){
         const soldOutNow = remaining <= 0;
-        const label = soldOutNow ? '품절' : `잔여 주문가능: ${remaining}${item.unit}`;
-        stockEl.textContent = isStale ? label + ' (확인중…)' : label;
+        if(item.hideStock){ // 수량은 숨기고 내부적으로만 집계, 품절일 때만 표시
+          stockEl.textContent = soldOutNow ? '품절' : '';
+          stockEl.style.display = soldOutNow ? '' : 'none';
+        } else {
+          const label = soldOutNow ? '품절' : `잔여 주문가능: ${remaining}${item.unit}`;
+          stockEl.textContent = isStale ? label + ' (확인중…)' : label;
+        }
         stockEl.classList.toggle('stock-out', soldOutNow);
       }
 
@@ -1458,7 +1464,7 @@ function applyStockData(ordered, isStale){
 function showStockCheckFailed(){
   CATEGORIES.forEach(cat=>{
     cat.items.forEach(item=>{
-      if(item.max === undefined) return;
+      if(item.max === undefined || item.hideStock) return;
       const stockEl = document.getElementById('stock-'+item.id);
       if(stockEl){
         stockEl.textContent = '재고 확인 지연 중… 잠시 후 자동 재시도';
